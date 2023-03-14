@@ -28,7 +28,7 @@ namespace Talabat.Apis.Controllers
             _unitOfWork = unitOfWork;
         }
 
-
+        [CachedAttribute(600)]
         [HttpGet]
         public async Task<ActionResult<Pagination<ProductToReturnDto>>> GetProducts([FromQuery] ProductSpecParams productParams)
         {
@@ -58,6 +58,7 @@ namespace Talabat.Apis.Controllers
             return Ok(_mapper.Map<Product, ProductToReturnDto>(product));
         }
 
+        [CachedAttribute(600)]
         [HttpGet("brands")]
         public async Task<ActionResult<IReadOnlyList<ProductBrand>>> GetBrands()
         {
@@ -65,6 +66,7 @@ namespace Talabat.Apis.Controllers
             return Ok(brands);
         }
 
+        [CachedAttribute(600)]
         [HttpGet("types")]
         public async Task<ActionResult<IReadOnlyList<ProductType>>> GetTypes()
         {
