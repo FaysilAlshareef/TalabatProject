@@ -7,11 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
-using Stripe;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
 using Talabat.Apis.Extensions;
 using Talabat.Apis.Middlewares;
@@ -26,40 +22,37 @@ namespace Talabat.Apis
     {
         public static async Task Main(string[] args)
         {
-            var bulider = WebApplication.CreateBuilder(args);
+            var builder = WebApplication.CreateBuilder(args);
 
-            #region Run Redis server
-            Process.Start("redis-server"); 
-            #endregion
 
             #region Configure Services
-            bulider.Services.AddControllers();
+            builder.Services.AddControllers();
 
-            //Allow Dependancy injection for StoreDbContext
-            bulider.Services.AddDbContext<StoreContext>(options
-                => options.UseSqlServer(bulider.Configuration.GetConnectionString("DefaultConnection")));
+            //Allow Dependency injection for StoreDbContext
+            builder.Services.AddDbContext<StoreContext>(options
+                => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            //Allow Dependancy injection for RedisDbContext
-            bulider.Services.AddSingleton<IConnectionMultiplexer>(S =>
+            //Allow Dependency injection for RedisDbContext
+            builder.Services.AddSingleton<IConnectionMultiplexer>(S =>
             {
-                var connection = bulider.Configuration.GetConnectionString("Redis");
+                var connection = builder.Configuration.GetConnectionString("Redis");
 
                 return ConnectionMultiplexer.Connect(connection);
             });
 
-            //Allow Dependancy injection for IdentityDbContext
-            bulider.Services.AddDbContext<AppIdentityDbContext>(options =>
-            options.UseSqlServer(bulider.Configuration.GetConnectionString("IdentityConnection")));
+            //Allow Dependency injection for IdentityDbContext
+            builder.Services.AddDbContext<AppIdentityDbContext>(options =>
+            options.UseSqlServer(builder.Configuration.GetConnectionString("IdentityConnection")));
 
 
             //ApplicationServicesExtensions.ApplicationServices(services);
-            bulider.Services.AddApplicationServices(); // call it as Extension method
+            builder.Services.AddApplicationServices(); // call it as Extension method
 
-            bulider.Services.AddSwaggerServices();
+            builder.Services.AddSwaggerServices();
 
-            bulider.Services.AddIdentityServices(bulider.Configuration);
+            builder.Services.AddIdentityServices(builder.Configuration);
 
-            bulider.Services.AddCors(options =>
+            builder.Services.AddCors(options =>
             {
                 options.AddPolicy("CorsPolicy", options =>
                 {
@@ -68,7 +61,7 @@ namespace Talabat.Apis
             });
             #endregion
 
-            var app = bulider.Build();
+            var app = builder.Build();
 
             #region Apply Migrations And Data Seeding
             var services = app.Services;
@@ -96,26 +89,26 @@ namespace Talabat.Apis
             #region Configure HTTP Request Pipelines
 
             app.UseMiddleware<ExceptionMiddleware>();
-                if (app.Environment.IsDevelopment())
-                {
-                    //app.UseDeveloperExceptionPage();
-                    app.UseSwaggerDocumentation();
-                }
+            if (app.Environment.IsDevelopment())
+            {
+                //app.UseDeveloperExceptionPage();
+                app.UseSwaggerDocumentation();
+            }
 
-                app.UseHttpsRedirection();
-                app.UseStaticFiles();
-                app.UseRouting();
-                app.UseCors("CorsPolicy");
-                app.UseAuthentication();
-                app.UseAuthorization();
+            app.UseHttpsRedirection();
+            app.UseStaticFiles();
+            app.UseRouting();
+            app.UseCors("CorsPolicy");
+            app.UseAuthentication();
+            app.UseAuthorization();
 
-                app.UseEndpoints(endpoints =>
-                {
-                    endpoints.MapControllers();
-                });
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
             #endregion
 
-            app.Run();  
+            app.Run();
         }
 
 
